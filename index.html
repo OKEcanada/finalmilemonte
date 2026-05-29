@@ -8,7 +8,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
 <meta http-equiv="Pragma" content="no-cache" />
 <meta http-equiv="Expires" content="0" />
-<meta name="oke-build" content="2026-05-29-finalmile-custom-quote-fix" />
+<meta name="oke-build" content="2026-05-29-finalmile-modal-safe-fix" />
 <title>Monte Design National Final Mile Calculator | One Kind Express</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2138,6 +2138,27 @@
   html.wix-mobile-crop .lane-arrow {
     transform: rotate(90deg) !important;
     justify-self: center !important;
+  }
+
+  html.is-embedded .modal.open {
+    align-items: flex-start !important;
+    justify-content: center !important;
+    padding-top: 112px !important;
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+    overflow-y: auto !important;
+  }
+  html.is-embedded .modal-card {
+    max-height: min(620px, calc(100vh - 132px)) !important;
+    overflow-y: auto !important;
+  }
+  @media (max-width: 700px) {
+    html.is-embedded .modal.open {
+      padding-top: 72px !important;
+    }
+    html.is-embedded .modal-card {
+      max-height: min(620px, calc(100vh - 92px)) !important;
+    }
   }
 
   @media print {
