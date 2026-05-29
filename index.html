@@ -8,7 +8,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
 <meta http-equiv="Pragma" content="no-cache" />
 <meta http-equiv="Expires" content="0" />
-<meta name="oke-build" content="2026-05-29-finalmile-fast-mobile-fix" />
+<meta name="oke-build" content="2026-05-29-finalmile-custom-quote-fix" />
 <title>Monte Design National Final Mile Calculator | One Kind Express</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1771,7 +1771,7 @@
   .r-book:hover::before { transform: translateX(100%); }
   .r-book svg { width: 16px; height: 16px; stroke: #fff; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
 
-  .modal { position: fixed; inset: 0; z-index: 9999; display: none; align-items: center; justify-content: center; padding: 20px; }
+  .modal { position: fixed; inset: 0; z-index: 9999; display: none; align-items: flex-start; justify-content: center; padding: 20px; overflow-y: auto; }
   .modal.open { display: flex; animation: modalFade .22s ease-out; }
   @keyframes modalFade { from { opacity: 0; } to { opacity: 1; } }
   .modal-backdrop { position: absolute; inset: 0; background: rgba(20, 24, 32, 0.55); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); cursor: pointer; }
@@ -1780,6 +1780,9 @@
     background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,255,255,0.94));
     backdrop-filter: blur(28px) saturate(140%); -webkit-backdrop-filter: blur(28px) saturate(140%);
     border-radius: 22px; padding: 26px 24px 22px;
+    margin: 0;
+    max-height: min(720px, calc(100vh - 40px));
+    overflow-y: auto;
     box-shadow: 0 30px 80px rgba(10,14,22,0.35), 0 1px 0 rgba(255,255,255,0.9) inset;
     border: 1px solid rgba(255,255,255,0.7);
     animation: modalPop .26s cubic-bezier(.2,.9,.3,1.2);
@@ -1820,8 +1823,8 @@
   .modal-act.copied.primary b { color: #fff; }
 
   @media (max-width: 520px) {
-    .modal { padding: 0; align-items: flex-end; }
-    .modal-card { max-width: none; border-radius: 22px 22px 0 0; padding: 22px 18px 26px; max-height: 92vh; overflow-y: auto; }
+    .modal.open { align-items: flex-start; justify-content: center; padding: 14px 10px; overflow-y: auto; }
+    .modal-card { max-width: 430px; border-radius: 20px; padding: 22px 18px 24px; max-height: min(620px, calc(100vh - 28px)); overflow-y: auto; margin-top: 0; }
     .modal-actions { grid-template-columns: 1fr; }
     .modal-act { padding: 14px 16px; }
     .modal-act b { font-size: 14.5px; }
@@ -2048,6 +2051,20 @@
       letter-spacing: 0 !important;
       line-height: 1.05 !important;
       white-space: normal !important;
+    }
+    .modal.open {
+      align-items: flex-start !important;
+      justify-content: center !important;
+      padding: 14px 10px !important;
+      overflow-y: auto !important;
+    }
+    .modal-card {
+      width: 100% !important;
+      max-width: 430px !important;
+      max-height: min(620px, calc(100vh - 28px)) !important;
+      border-radius: 20px !important;
+      margin-top: 0 !important;
+      overflow-y: auto !important;
     }
     .r-pickup {
       display: grid !important;
@@ -2311,7 +2328,6 @@
         <span id="laneLabelHdr">Lane</span>
         <div class="seg seg-sm" id="lhToggle">
           <button class="seg-btn active" data-lh="line">Full quote</button>
-          <button class="seg-btn" data-lh="local">Final mile only</button>
           <button class="seg-btn" data-lh="middle">Middle mile only</button>
         </div>
       </div>
@@ -2764,6 +2780,12 @@ const cmToIn = v => v / 2.54;
 const kgToLb = v => v / 0.45359237;
 const toInches = v => state.lenUnit === 'cm' ? cmToIn(v) : v;
 const toLbs = v => state.wtUnit === 'kg' ? kgToLb(v) : v;
+const palletDefaultLength = () => state.lenUnit === 'cm' ? 122 : 48;
+const palletDefaultWidth = () => state.lenUnit === 'cm' ? 102 : 40;
+const palletCount = p => Number(p && p.pallets) > 0 ? Number(p.pallets) : 1;
+const itemsPerPalletCount = p => Number(p && p.itemsPerPallet) > 0 ? Number(p.itemsPerPallet) : 1;
+const palletLength = p => Number(p && p.L) > 0 ? Number(p.L) : palletDefaultLength();
+const palletWidth = p => Number(p && p.W) > 0 ? Number(p.W) : palletDefaultWidth();
 
 function getRatesForLane(origin, dest) {
   const list = RATES[origin];
@@ -2775,9 +2797,7 @@ function getRatesForLane(origin, dest) {
 
 function piecesCount(p) {
   if (state.mode === 'pallet') {
-    const pal = Number(p.pallets) > 0 ? Number(p.pallets) : 1;
-    const ipp = Number(p.itemsPerPallet) > 0 ? Number(p.itemsPerPallet) : 1;
-    return pal * ipp;
+    return palletCount(p) * itemsPerPalletCount(p);
   }
   return Number(p.qty) > 0 ? Number(p.qty) : 1;
 }
@@ -2785,14 +2805,16 @@ function piecesCount(p) {
 // For volume/weight aggregation: pallets count the pallet unit, not the inner items.
 function volumetricCount(p) {
   if (state.mode === 'pallet') {
-    return Number(p.pallets) > 0 ? Number(p.pallets) : 1;
+    return palletCount(p);
   }
   return Number(p.qty) > 0 ? Number(p.qty) : 1;
 }
 
 function computePieceCF(p) {
   if (state.mode === 'cf') return Number(p.cf) || 0;
-  const L = Number(p.L) || 0, W = Number(p.W) || 0, H = Number(p.H) || 0;
+  const L = state.mode === 'pallet' ? palletLength(p) : (Number(p.L) || 0);
+  const W = state.mode === 'pallet' ? palletWidth(p) : (Number(p.W) || 0);
+  const H = Number(p.H) || 0;
   if (L > 0 && W > 0 && H > 0) {
     const Lin = toInches(L), Win = toInches(W), Hin = toInches(H);
     return (Lin * Win * Hin) / 1728;
@@ -2807,7 +2829,8 @@ function computePieceActualWeight(p) {
 
 function computePieceLinearFt(p) {
   if (state.mode === 'cf') return 0;
-  const L = Number(p.L) || 0, W = Number(p.W) || 0;
+  const L = state.mode === 'pallet' ? palletLength(p) : (Number(p.L) || 0);
+  const W = state.mode === 'pallet' ? palletWidth(p) : (Number(p.W) || 0);
   if (L <= 0 || W <= 0) return 0;
   const Lin = toInches(L), Win = toInches(W);
   return Math.ceil(((Lin * Win) / (96 * 12)) * 2) / 2 * volumetricCount(p);
@@ -2816,7 +2839,7 @@ function computePieceLinearFt(p) {
 function hasPricedItem() {
   return state.pieces.some(p => {
     if (state.mode === 'cf') return Number(p.cf) > 0;
-    if (state.mode === 'pallet') return Number(p.weight) > 0 && Number(p.L) > 0 && Number(p.W) > 0 && Number(p.H) > 0 && Number(p.pallets) > 0;
+    if (state.mode === 'pallet') return Number(p.weight) > 0 && Number(p.H) > 0;
     return Number(p.weight) > 0 && Number(p.L) > 0 && Number(p.W) > 0 && Number(p.H) > 0;
   });
 }
@@ -3022,11 +3045,11 @@ function renderPieces() {
       </div>`;
     } else if (state.mode === 'pallet') {
       inputsHtml = `<div class="piece-grid pallet">
-        <div class="field"><label class="field-label"># Pallets</label><input type="text" inputmode="decimal" data-p="${i}" data-k="pallets" value="${p.pallets ?? ""}" placeholder="1" /></div>
-        <div class="field"><label class="field-label">Items / pallet</label><input type="text" inputmode="decimal" data-p="${i}" data-k="itemsPerPallet" value="${p.itemsPerPallet ?? ""}" placeholder="1" /></div>
+        <div class="field"><label class="field-label"># Pallets</label><input type="text" inputmode="decimal" data-p="${i}" data-k="pallets" value="${p.pallets ?? 1}" placeholder="1" /></div>
+        <div class="field"><label class="field-label">Items / pallet</label><input type="text" inputmode="decimal" data-p="${i}" data-k="itemsPerPallet" value="${p.itemsPerPallet ?? 1}" placeholder="1" /></div>
         <div class="field"><label class="field-label">Weight / pallet (${wtLabel})</label><input type="text" inputmode="decimal" data-p="${i}" data-k="weight" value="${p.weight ?? ""}" placeholder="0" /></div>
-        <div class="field"><label class="field-label">L (${lenLabel})</label><input type="text" inputmode="decimal" data-p="${i}" data-k="L" value="${p.L ?? (state.lenUnit==='in'?48:122)}" placeholder="48" /></div>
-        <div class="field"><label class="field-label">W (${lenLabel})</label><input type="text" inputmode="decimal" data-p="${i}" data-k="W" value="${p.W ?? (state.lenUnit==='in'?40:102)}" placeholder="40" /></div>
+        <div class="field"><label class="field-label">L (${lenLabel})</label><input type="text" inputmode="decimal" data-p="${i}" data-k="L" value="${p.L ?? palletDefaultLength()}" placeholder="${palletDefaultLength()}" /></div>
+        <div class="field"><label class="field-label">W (${lenLabel})</label><input type="text" inputmode="decimal" data-p="${i}" data-k="W" value="${p.W ?? palletDefaultWidth()}" placeholder="${palletDefaultWidth()}" /></div>
         <div class="field"><label class="field-label">H (${lenLabel})</label><input type="text" inputmode="decimal" data-p="${i}" data-k="H" value="${p.H ?? ""}" placeholder="height" /></div>
       </div>`;
     }
@@ -3316,15 +3339,22 @@ function updateOutput() {
     return;
   }
 
+  const largeLinearQuote = Number(q.linearFt || 0) > 10;
+  const customQuoteLabel = 'Custom quote';
   const gt = $("grandTotal");
-  const newTotal = fmt(q.totalAfterTax);
+  const newTotal = largeLinearQuote ? customQuoteLabel : fmt(q.totalAfterTax);
   if (gt.textContent !== newTotal) {
     gt.textContent = newTotal;
     gt.classList.remove('bump');
     void gt.offsetWidth;
     gt.classList.add('bump');
   }
-  $("grandTotal2").textContent = fmt(q.total);
+  const grand2 = $("grandTotal2");
+  if (grand2) {
+    if (largeLinearQuote) grand2.dataset.noTween = '1';
+    else delete grand2.dataset.noTween;
+    grand2.textContent = largeLinearQuote ? customQuoteLabel : fmt(q.total);
+  }
 
   const svc = SERVICE_LEVELS.find(s => s.id === state.service);
   $("svcPill").textContent = svc ? svc.name : '—';
@@ -3353,7 +3383,7 @@ function updateOutput() {
   if (billableCallout) {
     billableCallout.classList.toggle("show", q.dimWins || q.linearWins);
     billableCallout.innerHTML = q.linearWins
-      ? `<strong>Linear-foot rule applies.</strong> Freight over 10 linear feet is billed at 1,000 lbs per linear foot.`
+      ? `<strong>Linear-foot rule applies.</strong> Freight over 10 linear feet needs a custom quote review.`
       : `<strong>Dimensional weight applies.</strong> Bulky low-density freight billed by volume.`;
   }
 
@@ -3366,7 +3396,7 @@ function updateOutput() {
       ? 'Middle mile'
       : (q.isLocal ? 'Final mile' : 'Base delivery');
   }
-  $("baseOut").textContent = fmt(baseTotal);
+  $("baseOut").textContent = largeLinearQuote ? 'Contact OKE' : fmt(baseTotal);
 
   if (q.extraPieces > 0) {
     $("extraPieceRow").style.display = "flex";
@@ -3374,15 +3404,39 @@ function updateOutput() {
   } else {
     $("extraPieceRow").style.display = "none";
   }
+  if (largeLinearQuote && q.extraPieces > 0) {
+    $("extraPieceOut").textContent = 'Included in review';
+  }
 
   $("accBreakdownRow").style.display = q.accAmount > 0 ? "flex" : "none";
-  $("accAmountOut").textContent = fmt(q.accAmount);
+  $("accAmountOut").textContent = largeLinearQuote ? 'Reviewed manually' : fmt(q.accAmount);
 
-  $("subtotalOut").textContent = fmt(q.subtotal);
-  $("fscAmountOut").textContent = fmt(q.fscAmount);
+  $("subtotalOut").textContent = largeLinearQuote ? 'Custom' : fmt(q.subtotal);
+  $("fscAmountOut").textContent = largeLinearQuote ? 'Custom' : fmt(q.fscAmount);
   $("taxLabel").textContent = q.tax.rate > 0 ? `Tax amount (${q.tax.rate}%)` : "Tax amount";
-  $("taxAmountOut").textContent = fmt(q.taxAmount);
-  $("totalAfterTaxOut").textContent = fmt(q.totalAfterTax);
+  $("taxAmountOut").textContent = largeLinearQuote ? 'Custom' : fmt(q.taxAmount);
+  $("totalAfterTaxOut").textContent = largeLinearQuote ? 'Contact OKE' : fmt(q.totalAfterTax);
+
+  let largeBanner = $("largeShipmentBanner");
+  if (largeLinearQuote) {
+    if (!largeBanner) {
+      largeBanner = document.createElement('div');
+      largeBanner.id = 'largeShipmentBanner';
+      largeBanner.style.cssText = 'margin:10px 0 14px;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,122,69,.45);background:rgba(255,122,69,.10);color:rgba(250,248,241,.94);font-size:12.5px;line-height:1.45;';
+      const target = $("pane-breakdown");
+      if (target) target.insertBefore(largeBanner, target.firstElementChild);
+    }
+    largeBanner.innerHTML = '<strong>Custom quote needed.</strong> This shipment is over 10 linear feet. Instant pricing is paused so One Kind Express can review equipment, routing, and capacity.';
+    if (!window._largeLinearModalShown) {
+      window._largeLinearModalShown = true;
+      setTimeout(() => {
+        if (typeof window.openBookingModal === 'function') window.openBookingModal({ largeLinear: true });
+      }, 120);
+    }
+  } else {
+    if (largeBanner) largeBanner.remove();
+    window._largeLinearModalShown = false;
+  }
 
   // ---- Enhanced chips & journey & compare ----
   // Province-pair distance estimate (km). Same city = 25, same prov = 250, neighbour = 800, far = 2200, very far = 3800
@@ -3521,21 +3575,22 @@ function updateOutput() {
     const lane = q.isLocal ? state.origin + ' (local)' : state.origin + ' → ' + state.destination;
     const pieceLines = (state.pieces || []).map((p, i) => {
       if (state.mode === 'pallet') {
-        const pal = Number(p.pallets) || 1, ipp = Number(p.itemsPerPallet) || 1;
-        const L = Number(p.L)||48, W = Number(p.W)||40, H = Number(p.H)||0;
+        const pal = palletCount(p), ipp = itemsPerPalletCount(p);
+        const L = palletLength(p), W = palletWidth(p), H = Number(p.H)||0;
         return `  ${i+1}. ${pal} pallet(s) × ${ipp} item(s) · ${L}×${W}×${H}" · ${Number(p.weight)||0} lbs/pallet`;
       } else if (state.mode === 'cf') {
         return `  ${i+1}. Qty ${Number(p.qty)||1} · ${Number(p.cf)||0} ft³ each · ${Number(p.weight)||0} lbs total`;
       }
       return `  ${i+1}. Qty ${Number(p.qty)||1} · ${Number(p.L)||0}×${Number(p.W)||0}×${Number(p.H)||0}" · ${Number(p.weight)||0} lbs total`;
     });
+    const largeLinearSummary = Number(q.linearFt || 0) > 10;
     const summaryLines = [
       'Reference: ' + window._quoteRef,
       'Lane: ' + lane,
       'Service: ' + svcName,
       'Items: ' + (q.totalPcs || 0) + ' · ' + (q.cubicFt||0).toFixed(2) + ' ft³ · ' + Math.round(q.billable||0) + ' lbs billable',
       'Preferred pickup: ' + (pkEl ? pkEl.value : '—'),
-      'Total: ' + fmt(q.totalAfterTax)
+      'Total: ' + (largeLinearSummary ? 'Custom quote required' : fmt(q.totalAfterTax))
     ];
     const accLines = (q.accSelected || []).map(a => '  - ' + a.label + (a.qty > 1 ? ' × ' + a.qty : '') + ' · ' + fmt(a.amount));
     const fullLines = [
@@ -3579,19 +3634,28 @@ function updateOutput() {
       '  Total before tax: ' + fmt(q.total || 0),
       '  Tax — ' + ((q.tax && q.tax.label) || '—') + ': ' + fmt(q.taxAmount || 0),
       '  ───────────────',
-      '  TOTAL: ' + fmt(q.totalAfterTax || 0),
+      '  TOTAL: ' + (largeLinearSummary ? 'Custom quote required - over 10 linear feet' : fmt(q.totalAfterTax || 0)),
       '',
       '— Please reply with your contact name, phone, and pickup/delivery addresses to confirm this booking. —',
       '',
       'Generated by the Monte Design Final Mile Calculator.'
     ];
     const summaryText = summaryLines.join('\n');
-    const fullText = fullLines.filter(Boolean).join('\r\n');
+    let fullText = fullLines.filter(Boolean).join('\r\n');
+    if (largeLinearSummary) {
+      const customPricing = [
+        'PRICING BREAKDOWN',
+        '  Status: Custom quote required - over 10 linear feet',
+        '  Instant pricing is paused so One Kind Express can review equipment, routing, and capacity.'
+      ].join('\r\n');
+      fullText = fullText.replace(/PRICING BREAKDOWN[\s\S]*?Generated by the Monte Design Final Mile Calculator\./, customPricing + '\r\n\r\nGenerated by the Monte Design Final Mile Calculator.');
+    }
     window._bookingSummary = summaryText;
     window._bookingEmailBody = fullText;
+    const emailSubject = largeLinearSummary ? ('Custom quote request ' + window._quoteRef + ' - ' + lane) : null;
     const subj = 'Booking request ' + window._quoteRef + ' · ' + lane;
     const mEmail = $("mEmail"), mSum = $("modalSummary");
-    if (mEmail) mEmail.href = 'mailto:info@onekindexpress.com?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(fullText);
+    if (mEmail) mEmail.href = 'mailto:info@onekindexpress.com?subject=' + encodeURIComponent(emailSubject || subj) + '&body=' + encodeURIComponent(fullText);
     if (mSum) mSum.textContent = summaryText;
   }
 
@@ -3779,7 +3843,13 @@ function setupStepper() {
     const pct = (activeIdx / ordered.length) * 100;
     stepperFill.style.width = pct + '%';
     if (mobileCta && stickyTotal && q) {
-      stickyTotal.textContent = '$' + (q.totalAfterTax || 0).toFixed(2);
+      if (Number(q.linearFt || 0) > 10) {
+        stickyTotal.dataset.noTween = '1';
+        stickyTotal.textContent = 'Custom quote';
+      } else {
+        delete stickyTotal.dataset.noTween;
+        stickyTotal.textContent = '$' + (q.totalAfterTax || 0).toFixed(2);
+      }
       mobileCta.classList.toggle('show', !!(q.hasLane && q.hasMeasurements && q.hasService));
     }
     // Trigger confetti once when reaching final step
@@ -3870,30 +3940,8 @@ function setupSceneMesh() {
 }
 
 function setupNumberTween() {
-  // Animate the grand total number on change
-  const watchSelectors = ['#grandTotal2', '#stickyTotal'];
-  watchSelectors.forEach(sel => {
-    const el = document.querySelector(sel);
-    if (!el) return;
-    let prev = parseFloat((el.textContent || '0').replace(/[^0-9.]/g, '')) || 0;
-    const obs = new MutationObserver(() => {
-      const next = parseFloat((el.textContent || '0').replace(/[^0-9.]/g, '')) || 0;
-      if (Math.abs(next - prev) < 0.005) { prev = next; return; }
-      const from = prev, to = next, dur = 420, start = performance.now();
-      const target = el;
-      obs.disconnect();
-      function tick(t) {
-        const k = Math.min(1, (t - start) / dur);
-        const eased = 1 - Math.pow(1 - k, 3);
-        const v = from + (to - from) * eased;
-        target.textContent = '$' + v.toFixed(2);
-        if (k < 1) requestAnimationFrame(tick);
-        else { prev = to; obs.observe(target, { childList: true, characterData: true, subtree: true }); }
-      }
-      requestAnimationFrame(tick);
-    });
-    obs.observe(el, { childList: true, characterData: true, subtree: true });
-  });
+  // Disabled for the Wix embed build. Direct text writes are faster and avoid
+  // stale money animations overwriting "Custom quote" states.
 }
 
 function setupMagneticHover() {
@@ -3916,18 +3964,19 @@ function setupActions() {
     if (!q.hasLane || !q.hasMeasurements || !q.hasService) return;
     const svc = SERVICE_LEVELS.find(s => s.id === state.service);
     const lane = q.isLocal ? `${state.origin} local delivery` : `${state.origin} to ${state.destination}`;
+    const largeLinear = Number(q.linearFt || 0) > 10;
     const text = [
       'Monte Design delivery quote',
       `Lane: ${lane}`,
       `Service: ${svc ? svc.name : ''}`,
       `Billable weight: ${fmtW(q.billable)}`,
-      `Base delivery: ${fmt(q.baseFinalMile + q.middleMileSell)}`,
-      q.extraPieceCharge > 0 ? `Extra items: ${fmt(q.extraPieceCharge)}` : null,
-      q.accAmount > 0 ? `Additional services: ${fmt(q.accAmount)}` : null,
-      `Fuel surcharge: ${fmt(q.fscAmount)}`,
-      `Total before tax: ${fmt(q.total)}`,
-      q.tax.rate > 0 ? `Tax (${q.tax.label}): ${fmt(q.taxAmount)}` : null,
-      `Total after tax: ${fmt(q.totalAfterTax)}`,
+      largeLinear ? 'Status: Custom quote required - over 10 linear feet' : `Base delivery: ${fmt(q.baseFinalMile + q.middleMileSell)}`,
+      !largeLinear && q.extraPieceCharge > 0 ? `Extra items: ${fmt(q.extraPieceCharge)}` : null,
+      !largeLinear && q.accAmount > 0 ? `Additional services: ${fmt(q.accAmount)}` : null,
+      !largeLinear ? `Fuel surcharge: ${fmt(q.fscAmount)}` : null,
+      !largeLinear ? `Total before tax: ${fmt(q.total)}` : null,
+      !largeLinear && q.tax.rate > 0 ? `Tax (${q.tax.label}): ${fmt(q.taxAmount)}` : null,
+      `Total after tax: ${largeLinear ? 'Custom quote' : fmt(q.totalAfterTax)}`,
     ].filter(Boolean).join('\n');
     try {
       await navigator.clipboard.writeText(text);
@@ -3947,12 +3996,15 @@ function setupActions() {
     const svc = SERVICE_LEVELS.find(s => s.id === state.service);
     const lane = q.isLocal ? `${state.origin} local` : `${state.origin} → ${state.destination}`;
     const summary = `Monte Design quote · ${lane} · ${svc ? svc.name : ''} · ${fmt(q.totalAfterTax)}`;
+    const shareText = Number(q.linearFt || 0) > 10
+      ? `Monte Design quote - ${lane} - ${svc ? svc.name : ''} - Custom quote`
+      : summary;
     let shared = false;
     try {
-      if (navigator.share) { await navigator.share({ title: 'Monte Design Delivery Quote', text: summary }); shared = true; }
+      if (navigator.share) { await navigator.share({ title: 'Monte Design Delivery Quote', text: shareText }); shared = true; }
     } catch (e) {}
     if (!shared) {
-      try { await navigator.clipboard.writeText(summary); } catch (e) {}
+      try { await navigator.clipboard.writeText(shareText); } catch (e) {}
       openBookingModal();
       return;
     }
@@ -3964,15 +4016,25 @@ function setupActions() {
   // Booking modal open/close
   const bookBtnEl = $("bookBtn");
   const bookModal = $("bookModal");
-  function openBookingModal() {
+  function openBookingModal(opts = {}) {
     if (!bookModal) return;
     const q = computeQuote();
     if (!q.hasLane || !q.hasMeasurements || !q.hasService) return;
+    const largeLinear = !!opts.largeLinear || Number(q.linearFt || 0) > 10;
+    const label = bookModal.querySelector('.modal-label');
+    const title = $("bookTitle");
+    const sub = bookModal.querySelector('.modal-sub');
+    if (label) label.textContent = largeLinear ? 'Custom quote' : 'Booking request';
+    if (title) title.textContent = largeLinear ? 'Large shipment - contact One Kind Express' : 'Send this quote to One Kind Express';
+    if (sub) sub.textContent = largeLinear
+      ? 'This shipment is over 10 linear feet, so instant pricing is paused. Copy the details, email, or call and One Kind Express will review equipment, routing, and capacity.'
+      : "Pick how you'd like to send it. We'll prepare the message with your quote details - you confirm before sending.";
     bookModal.classList.add('open');
     bookModal.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
     try { if (typeof launchConfetti === 'function') launchConfetti(); } catch(e) {}
   }
+  window.openBookingModal = openBookingModal;
   function closeBookingModal() {
     if (!bookModal) return;
     bookModal.classList.remove('open');
