@@ -5,10 +5,48 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="description" content="Monte Design national final mile delivery calculator powered by One Kind Express." />
 <meta name="theme-color" content="#0b0f24" />
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
+<meta name="oke-build" content="2026-05-29-finalmile-fast-mobile-fix" />
 <title>Monte Design National Final Mile Calculator | One Kind Express</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script>
+  try {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => { try { r.unregister(); } catch(_) {} }));
+    }
+  } catch(_) {}
+</script>
+<script>
+  (function fitWixMobileEmbed() {
+    const apply = () => { try {
+      const root = document.documentElement;
+      const embedded = window.self !== window.top;
+      const ref = document.referrer || '';
+      const fromWix = /(^|\/\/)(www\.)?onekindexpress\.com\//i.test(ref) || /wix/i.test(ref);
+      if (embedded) root.classList.add('is-embedded');
+      if (fromWix) root.classList.add('is-wix-embed');
+      const outer = Number(window.outerWidth || screen.width || 0);
+      const croppedByParent = embedded && fromWix && outer > 0 && outer < 900 && window.innerWidth > outer + 180;
+      if (croppedByParent) {
+        const visibleWidth = Math.min(980, Math.max(760, window.innerWidth - 2 * Math.max(0, (window.innerWidth - 980) / 2)));
+        const offset = Math.max(0, (window.innerWidth - visibleWidth) / 2);
+        root.classList.add('wix-mobile-crop');
+        root.style.setProperty('--wix-visible-width', visibleWidth + 'px');
+        root.style.setProperty('--wix-visible-offset', offset + 'px');
+      } else {
+        root.classList.remove('wix-mobile-crop');
+        root.style.removeProperty('--wix-visible-width');
+        root.style.removeProperty('--wix-visible-offset');
+      }
+    } catch (_) {} };
+    apply();
+    window.addEventListener('resize', () => requestAnimationFrame(apply), { passive: true });
+  })();
+</script>
 <style>
   :root {
     --ink: #0c1024;
@@ -1809,6 +1847,280 @@
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
     }
+  }
+
+  /* Calculator-only performance build: keep the Wix iframe light and stable. */
+  html, body {
+    background: #f3f0e7 !important;
+    overflow-x: hidden !important;
+  }
+  .scene,
+  .confetti-canvas,
+  .mobile-cta {
+    display: none !important;
+  }
+  .page {
+    padding: 22px 18px 48px !important;
+    min-height: auto !important;
+  }
+  .topbar {
+    margin-bottom: 14px !important;
+    border-radius: 14px !important;
+    background: #0b1024 !important;
+    border: 1px solid rgba(255,255,255,0.14) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+  }
+  .grid { gap: 16px !important; }
+  .card,
+  .result-card,
+  .modal-card,
+  .mobile-cta,
+  .r-tabs,
+  .r-chip,
+  .intel-card,
+  .vis-card,
+  .piece,
+  .svc-card,
+  .accessorials-toggle,
+  .accessorials-content,
+  .r-journey,
+  .r-compare,
+  .r-pickup,
+  .r-density {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+    filter: none !important;
+  }
+  .result-card {
+    position: static !important;
+    top: auto !important;
+    align-self: start !important;
+    contain: layout paint !important;
+  }
+  .card,
+  .result-card {
+    border: 1px solid rgba(12,16,36,0.12) !important;
+  }
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+    text-shadow: none !important;
+  }
+  .card::before,
+  .card::after,
+  .result-card::before,
+  .result-card::after,
+  .r-route::before,
+  .r-route-line::after,
+  .r-book::before,
+  .add-piece-btn::before,
+  .intel-card::after,
+  .r-tab::before,
+  .r-tab::after {
+    display: none !important;
+  }
+  .r-route-truck {
+    animation: truckGo 5s linear infinite !important;
+    filter: none !important;
+    will-change: left !important;
+  }
+  @media (max-width: 960px) {
+    .page { padding: 14px 10px 32px !important; }
+    .grid { grid-template-columns: 1fr !important; }
+  }
+  @media (max-width: 600px) {
+    html, body {
+      width: 100% !important;
+      min-width: 0 !important;
+      max-width: 100% !important;
+      overflow-x: hidden !important;
+    }
+    .page,
+    .topbar,
+    .grid,
+    .card,
+    .result-card {
+      width: 100% !important;
+      min-width: 0 !important;
+      max-width: 100% !important;
+    }
+    .grid,
+    .grid > *,
+    .card > *,
+    .result-card > *,
+    #resultContent,
+    .piece,
+    .piece > *,
+    .field,
+    .field input,
+    .field select,
+    .field textarea,
+    .r-tabs,
+    .r-tab,
+    .r-chip,
+    .r-pickup,
+    .r-density,
+    .r-breakdown,
+    .r-box,
+    .lane-info,
+    .accessorials-toggle,
+    .accessorials-content {
+      min-width: 0 !important;
+      max-width: 100% !important;
+    }
+    .card,
+    .result-card {
+      overflow: hidden !important;
+    }
+    .card-h1,
+    .card-sub,
+    .wordmark-text,
+    .r-total,
+    .r-total-sub,
+    .lane,
+    .b-row .l,
+    .b-row .v,
+    .r-row .l,
+    .r-row .v,
+    .r-chip .label,
+    .r-chip .val {
+      overflow-wrap: anywhere !important;
+      word-break: normal !important;
+    }
+    .stepper-dots {
+      grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+      gap: 4px !important;
+    }
+    .stp-dot {
+      min-width: 0 !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      justify-content: flex-start !important;
+      gap: 4px !important;
+      text-align: center !important;
+    }
+    .stp-dot .stp-lbl {
+      max-width: 100% !important;
+      font-size: 10px !important;
+      letter-spacing: 0 !important;
+      line-height: 1.1 !important;
+    }
+    .lane-control-head,
+    .measure-row {
+      min-width: 0 !important;
+    }
+    .seg {
+      min-width: 0 !important;
+      max-width: 100% !important;
+      overflow: hidden !important;
+    }
+    .seg-btn {
+      min-width: 0 !important;
+      padding-left: 8px !important;
+      padding-right: 8px !important;
+      letter-spacing: 0 !important;
+      white-space: normal !important;
+      line-height: 1.15 !important;
+    }
+    .r-chips {
+      display: grid !important;
+      grid-template-columns: 1fr !important;
+      gap: 8px !important;
+    }
+    .r-chip {
+      width: 100% !important;
+      min-width: 0 !important;
+    }
+    .r-tabs {
+      grid-auto-flow: unset !important;
+      grid-auto-columns: unset !important;
+      grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+      border-radius: 14px !important;
+      padding: 4px !important;
+    }
+    .r-tab {
+      padding: 8px 3px !important;
+      font-size: 9.5px !important;
+      letter-spacing: 0 !important;
+      line-height: 1.05 !important;
+      white-space: normal !important;
+    }
+    .r-pickup {
+      display: grid !important;
+      grid-template-columns: 1fr !important;
+      align-items: stretch !important;
+    }
+    .r-pickup input[type="date"],
+    .tax-select,
+    .pct-input-wrap {
+      width: 100% !important;
+      min-width: 0 !important;
+      max-width: 100% !important;
+    }
+    .r-pickup #deliveryEta {
+      margin-left: 0 !important;
+    }
+    .r-density-head,
+    .r-density-scale {
+      gap: 8px !important;
+    }
+    .b-row,
+    .r-row {
+      align-items: flex-start !important;
+    }
+    .b-row .l,
+    .r-row .l {
+      min-width: 0 !important;
+      flex: 1 1 auto !important;
+    }
+    .b-row .v,
+    .r-row .v {
+      flex: 0 1 46% !important;
+      min-width: 0 !important;
+    }
+  }
+  html.wix-mobile-crop,
+  html.wix-mobile-crop body {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+  html.wix-mobile-crop .page {
+    width: var(--wix-visible-width, 980px) !important;
+    max-width: var(--wix-visible-width, 980px) !important;
+    min-width: 0 !important;
+    margin-left: var(--wix-visible-offset, auto) !important;
+    margin-right: auto !important;
+    padding: 18px 10px 38px !important;
+    align-items: stretch !important;
+  }
+  html.wix-mobile-crop .topbar,
+  html.wix-mobile-crop .grid {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  html.wix-mobile-crop .grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 16px !important;
+  }
+  html.wix-mobile-crop .card,
+  html.wix-mobile-crop .result-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+  html.wix-mobile-crop .lane-row {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+  html.wix-mobile-crop .lane-arrow {
+    transform: rotate(90deg) !important;
+    justify-self: center !important;
   }
 
   @media print {
